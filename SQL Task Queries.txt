@@ -1,0 +1,23 @@
+1. Determine the number of ads which have generated leads on the site per day.
+
+--First Query Solution--:
+
+select date_of_lead,count(ad_id) as Number_of_ads
+from public."Distilled1"
+group by date_of_lead
+order by date_of_lead;
+
+2. Determine the YoY growth of leads in county Dublin from 2018 to 2020 (use lag).
+
+--Second Query Solution--
+
+with leads_cte as (
+select extract(year from date_of_lead) as Years,sum(leads) as Leads,date_of_lead
+from public."Distilled1"
+where county = 'Dublin'
+group by extract(year from date_of_lead),date_of_lead)
+
+select Years,sum(Leads) as Total_leads,
+cast(round(coalesce((sum(Leads)-lag(sum(Leads),1) over (order by Years))*1.0/lag(sum(Leads),1) over (order by Years),0),2) as decimal(10,2)) as Percnt_diff
+from leads_cte where date_of_lead between '2017-01-01' and '2020-12-31'
+group by Years order by Years;
